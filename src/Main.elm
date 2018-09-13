@@ -1,9 +1,7 @@
 module Main exposing (main)
 
-import Config exposing (Config)
-import Html
-import Html.Styled exposing (..)
-import Json.Decode as JD exposing (Value)
+import Html exposing (..)
+import Http
 
 
 
@@ -11,18 +9,32 @@ import Json.Decode as JD exposing (Value)
 
 
 type alias Model =
-    { config : Config
-    }
+    String
 
 
-init : Value -> ( Model, Cmd Msg )
-init configValue =
-    case JD.decodeValue Config.configDecoder configValue of
-        Ok config ->
-            { config = config } ! []
+initModel : Model
+initModel =
+    "finding new joke"
 
-        Err error ->
-            Debug.crash error
+
+randomJoke : Cmd Msg
+randomJoke =
+    let
+        url =
+            "http://api.icndb.com/jokes/random"
+
+        request =
+            Http.getString url
+
+        cmd =
+            Http.send Joke request
+    in
+    cmd
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initModel, randomJoke )
 
 
 
@@ -30,12 +42,17 @@ init configValue =
 
 
 type Msg
-    = NoOp
+    = Joke (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    model ! []
+    case msg of
+        Joke (Ok joke) ->
+            ( joke, Cmd.none )
+
+        Joke (Err err) ->
+            ( toString err, Cmd.none )
 
 
 
@@ -53,18 +70,18 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    text "Hello World!"
+    div [] [ text model ]
 
 
 
 -- MAIN --
 
 
-main : Program Value Model Msg
+main : Program Never Model Msg
 main =
-    Html.programWithFlags
-        { view = view >> Html.Styled.toUnstyled
-        , init = init
+    Html.program
+        { init = init
         , update = update
+        , view = view
         , subscriptions = subscriptions
         }

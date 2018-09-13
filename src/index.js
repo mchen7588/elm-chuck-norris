@@ -4,4 +4,4 @@ const config = require('./config.json');
 const root = document.getElementById('root');
 const date = new Date().toISOString();
 
-Elm.Main.embed(root, { ...config, date });
+Elm.Main.embed(root);
