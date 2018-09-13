@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (..)
+import Html.Events exposing (..)
 import Http
 
 
@@ -43,6 +44,7 @@ init =
 
 type Msg
     = Joke (Result Http.Error String)
+    | GetNewJoke
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -51,8 +53,11 @@ update msg model =
         Joke (Ok joke) ->
             ( joke, Cmd.none )
 
-        Joke (Err err) ->
-            ( toString err, Cmd.none )
+        Joke (Err error) ->
+            ( toString error, Cmd.none )
+
+        GetNewJoke ->
+            ( "findind another joke", randomJoke )
 
 
 
@@ -70,7 +75,14 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div [] [ text model ]
+    div
+        []
+        [ text model
+        , br [] []
+        , button
+            [ onClick GetNewJoke ]
+            [ text "get new joke" ]
+        ]
 
 
 
