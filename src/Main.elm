@@ -1,8 +1,10 @@
 module Main exposing (main)
 
 import Html exposing (..)
-import Html.Events exposing (..)
+import Html.Events exposing (onClick)
 import Http
+import Json.Decode exposing (..)
+import Json.Decode.Pipeline exposing (..)
 
 
 
@@ -13,7 +15,7 @@ type alias Model =
     String
 
 
-initModel : Model
+initModel : String
 initModel =
     "finding new joke"
 
@@ -25,7 +27,7 @@ randomJoke =
             "http://api.icndb.com/jokes/random"
 
         request =
-            Http.getString url
+            Http.get url (at [ "value", "joke" ] string)
 
         cmd =
             Http.send Joke request
@@ -53,8 +55,8 @@ update msg model =
         Joke (Ok joke) ->
             ( joke, Cmd.none )
 
-        Joke (Err error) ->
-            ( toString error, Cmd.none )
+        Joke (Err err) ->
+            ( toString err, Cmd.none )
 
         GetNewJoke ->
             ( "findind another joke", randomJoke )
