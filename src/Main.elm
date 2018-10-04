@@ -12,12 +12,22 @@ import Json.Decode.Pipeline exposing (..)
 
 
 type alias Model =
-    String
+    ChuckNorris
 
 
-initModel : String
+type alias ChuckNorris =
+    { id : Int
+    , chuckNorrisJoke : String
+    , categoryList : List String
+    }
+
+
+initModel : ChuckNorris
 initModel =
-    "finding new joke"
+    { id = 0
+    , chuckNorrisJoke = "finding new joke"
+    , categoryList = []
+    }
 
 
 randomJoke : Cmd Msg
@@ -27,12 +37,26 @@ randomJoke =
             "http://api.icndb.com/jokes/random"
 
         request =
-            Http.get url (at [ "value", "joke" ] string)
+            Http.get url responseDecoder
 
         cmd =
             Http.send Joke request
     in
     cmd
+
+
+responseDecoder : Decoder ChuckNorris
+responseDecoder =
+    decode identity
+        |> required "value" chuckNorrisDecoder
+
+
+chuckNorrisDecoder : Decoder ChuckNorris
+chuckNorrisDecoder =
+    decode ChuckNorris
+        |> required "id" int
+        |> required "joke" string
+        |> optional "categories" (list string) []
 
 
 init : ( Model, Cmd Msg )
@@ -45,21 +69,21 @@ init =
 
 
 type Msg
-    = Joke (Result Http.Error String)
+    = Joke (Result Http.Error ChuckNorris)
     | GetNewJoke
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Joke (Ok joke) ->
-            ( joke, Cmd.none )
+        Joke (Ok chuckNorris) ->
+            ( { model | chuckNorrisJoke = chuckNorris.chuckNorrisJoke, id = chuckNorris.id, categoryList = chuckNorris.categoryList }, Cmd.none )
 
         Joke (Err err) ->
-            ( toString err, Cmd.none )
+            ( { model | chuckNorrisJoke = toString err }, Cmd.none )
 
         GetNewJoke ->
-            ( "findind another joke", randomJoke )
+            ( { model | chuckNorrisJoke = "dj khaled another one" }, randomJoke )
 
 
 
@@ -79,11 +103,30 @@ view : Model -> Html Msg
 view model =
     div
         []
-        [ text model
+        [ span
+            []
+            [ text ("ID: " ++ toString model.id) ]
+        , br [] []
+        , span
+            []
+            [ text ("joke: " ++ model.chuckNorrisJoke) ]
+        , br [] []
+        , ul [] (List.map categoryListView model.categoryList)
         , br [] []
         , button
             [ onClick GetNewJoke ]
             [ text "get new joke" ]
+        ]
+
+
+categoryListView : String -> Html Msg
+categoryListView category =
+    li
+        []
+        [ text "category: "
+        , span
+            []
+            [ text category ]
         ]
 
 
